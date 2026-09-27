@@ -21,7 +21,8 @@ npm run typecheck # type-checks the project without emitting files
 
 We run TypeScript directly with [`tsx`](https://github.com/privatenumber/tsx),
 so there is no separate build step. State is seeded on startup and resets when
-the process restarts.
+the process restarts. No database or external service is needed — `npm install`
+then `npm start` is the whole setup.
 
 ## Configuration
 
@@ -30,6 +31,30 @@ the process restarts.
 | `PORT`             | `3000`  | HTTP port                            |
 | `NTH_ORDER`        | `5`     | Every nth order earns a coupon       |
 | `DISCOUNT_PERCENT` | `10`    | Coupon value, in percent             |
+
+## Seed data
+
+Five products are seeded on startup, one with deliberately limited stock so
+overselling and concurrency are easy to exercise:
+
+| id | name                | price  | stock |
+| -- | ------------------- | ------ | ----- |
+| p1 | Mechanical Keyboard | 79.99  | 25    |
+| p2 | Wireless Mouse      | 29.99  | 3     |
+| p3 | USB-C Hub           | 45.50  | 40    |
+| p4 | 27" Monitor         | 219.99 | 10    |
+| p5 | Laptop Stand        | 34.99  | 15    |
+
+## Tests
+
+```bash
+npm test
+```
+
+The suite targets the risky paths, not just the happy path: concurrent checkout
+on the last units (no overselling), idempotent retries (one order, stock consumed
+once), single-use coupons, a coupon surviving a failed checkout, and the
+money/report math.
 
 ## Money and errors
 
@@ -43,6 +68,10 @@ the process restarts.
   and `ORDER_NOT_FOUND`.
 
 ## API
+
+### Health
+
+**`GET /health`** — liveness check. `200` → `{ "status": "ok" }`.
 
 ### Catalog
 
@@ -100,6 +129,11 @@ total orders. `200`.
 
 A ready-to-run Postman collection is in [`postman_collection.json`](postman_collection.json).
 
+## Frontend
+
+An optional React (Vite + Material UI) storefront lives in
+[`../frontend`](../frontend); see its README to run it against this API.
+
 ## Project layout
 
 ```
@@ -113,7 +147,7 @@ backend/
     errors.ts          # AppError + error-handling middleware
     async-handler.ts   # forwards async route errors
     services/checkout.ts
-    routes/            # health, products, carts, orders, admin
+    routes/            # health, products, carts, orders, coupons, admin
   tests/               # node:test + supertest
   tsconfig.json
   README.md

@@ -5,7 +5,14 @@ export type Product = {
   stock: number;
 };
 
+// A cart holds quantities only; prices are read from the catalog when needed.
+export type Cart = {
+  id: string;
+  items: Map<string, number>; // productId -> quantity
+};
+
 export const products = new Map<string, Product>();
+export const carts = new Map<string, Cart>();
 
 function seed(): void {
   products.clear();
@@ -21,6 +28,7 @@ function seed(): void {
 
 // Reseed to a clean state; tests call this so every run starts identical.
 export function reset(): void {
+  carts.clear();
   seed();
 }
 

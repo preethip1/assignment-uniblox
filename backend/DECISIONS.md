@@ -40,3 +40,20 @@ alongside the concurrency work.
 under `routes/`. Keeps `app.ts` readable and each area easy to test. Handlers
 stay inline for now; I'll pull checkout into a service once it grows, so routes
 stay thin.
+
+## Predictable errors
+
+Every failure throws a small `AppError` carrying an HTTP status and a stable
+code, and a single error-handling middleware turns those into
+`{ error: { code, message } }`. Clients can branch on the code
+(`PRODUCT_NOT_FOUND`, `INVALID_QUANTITY`, `INSUFFICIENT_STOCK`, ...) instead of
+parsing text, and the routes stay focused on the happy path.
+
+## Carts store quantities, not prices
+
+A cart holds only `productId -> qty`; the price is read from the catalog when the
+cart is viewed. So if a price changes while a cart is open, the customer just
+sees the current price — nothing stale is frozen into the cart. What price an
+order locks in at checkout is a separate decision I'll make with the order code.
+Quantity and stock are checked as an item goes in, so an invalid item never
+enters the cart in the first place.

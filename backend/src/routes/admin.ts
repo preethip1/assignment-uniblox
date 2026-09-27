@@ -55,6 +55,8 @@ adminRouter.get("/report", (_req, res) => {
 
   res.json({
     totalOrders: orders.size,
+    couponEveryNOrders: config.nthOrder,
+    discountPercent: config.discountPercent,
     itemsSold: [...soldByProduct.values()],
     grossRevenueCents,
     grossRevenue: formatCents(grossRevenueCents),

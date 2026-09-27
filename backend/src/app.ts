@@ -3,6 +3,7 @@ import { healthRouter } from "./routes/health";
 import { productsRouter } from "./routes/products";
 import { cartsRouter } from "./routes/carts";
 import { ordersRouter } from "./routes/orders";
+import { couponsRouter } from "./routes/coupons";
 import { adminRouter } from "./routes/admin";
 import { errorHandler } from "./errors";
 
@@ -15,6 +16,7 @@ export function createApp(): Express {
   app.use("/products", productsRouter);
   app.use("/carts", cartsRouter);
   app.use("/orders", ordersRouter);
+  app.use("/coupons", couponsRouter);
   app.use("/admin", adminRouter);
 
   app.use(errorHandler);

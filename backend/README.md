@@ -82,6 +82,11 @@ accumulates if the product is already in the cart. `200` with the cart, or
 
 **`GET /orders/:id`** — fetch an order. `200`, or `404 ORDER_NOT_FOUND`.
 
+### Coupons
+
+**`GET /coupons/:code`** — look up a coupon's `percentOff` and `redeemed` status
+(used to preview a discount before checkout). `200`, or `404 COUPON_NOT_FOUND`.
+
 ### Admin
 
 **`POST /admin/coupons/generate`** — mint a coupon for the latest reached

@@ -54,6 +54,7 @@ test("the report reconciles orders, revenue, and coupons", async () => {
   assert.strictEqual(res.status, 200);
 
   assert.strictEqual(res.body.totalOrders, 6);
+  assert.strictEqual(res.body.couponEveryNOrders, 5);
   assert.strictEqual(res.body.itemsSold[0].productId, "p1");
   assert.strictEqual(res.body.itemsSold[0].qty, 6);
   assert.strictEqual(res.body.grossRevenueCents, 7999 * 6);

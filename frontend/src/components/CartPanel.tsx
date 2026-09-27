@@ -3,6 +3,7 @@ import { Add, Remove, ShoppingCartOutlined } from "@mui/icons-material";
 import { Box, Button, Divider, IconButton, Paper, Stack, TextField, Typography } from "@mui/material";
 
 import { api } from "../api";
+import { brandGradient } from "../theme";
 import type { Cart } from "../types";
 
 type Props = {
@@ -126,9 +127,9 @@ export default function CartPanel({ cart, coupon, onCoupon, onChangeQty, onCheck
         disableElevation
         disabled={items.length === 0}
         onClick={onCheckout}
-        sx={{ py: 1.25 }}
+        sx={{ py: 1.25, background: items.length ? brandGradient : undefined }}
       >
-        Checkout
+        Checkout · ${usd(totalCents)}
       </Button>
     </Paper>
   );

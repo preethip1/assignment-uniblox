@@ -20,6 +20,14 @@ export const theme = createTheme({
   components: {
     MuiPaper: { styleOverrides: { root: { backgroundImage: "none" } } },
     MuiButton: { styleOverrides: { root: { borderRadius: 10 } } },
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          transition: "transform .18s ease, box-shadow .18s ease",
+          "&:hover": { transform: "translateY(-3px)", boxShadow: "0 14px 30px rgba(29,32,51,0.10)" },
+        },
+      },
+    },
   },
 });
 

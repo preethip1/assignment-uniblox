@@ -58,7 +58,7 @@ export default function App() {
         position="sticky"
         color="inherit"
         elevation={0}
-        sx={{ borderBottom: 1, borderColor: "divider" }}
+        sx={{ borderBottom: 1, borderColor: "divider", bgcolor: "rgba(255,255,255,0.85)", backdropFilter: "blur(8px)" }}
       >
         <Toolbar>
           <Box

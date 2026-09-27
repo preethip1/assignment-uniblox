@@ -9,6 +9,7 @@ import type { Cart } from "../types";
 type Props = {
   cart: Cart | null;
   coupon: string;
+  activeCoupon: { code: string; percentOff: number } | null;
   onCoupon: (value: string) => void;
   onChangeQty: (productId: string, qty: number) => void;
   onCheckout: () => void;
@@ -16,7 +17,7 @@ type Props = {
 
 const usd = (cents: number) => (cents / 100).toFixed(2);
 
-export default function CartPanel({ cart, coupon, onCoupon, onChangeQty, onCheckout }: Props) {
+export default function CartPanel({ cart, coupon, activeCoupon, onCoupon, onChangeQty, onCheckout }: Props) {
   const items = cart?.items ?? [];
   const subtotalCents = cart?.subtotalCents ?? 0;
 
@@ -120,6 +121,28 @@ export default function CartPanel({ cart, coupon, onCoupon, onChangeQty, onCheck
         helperText={couponHelp}
         sx={{ mt: 1.5, mb: 1.5 }}
       />
+
+      {activeCoupon ? (
+        coupon.trim() === activeCoupon.code ? (
+          <Typography variant="caption" color="success.main" sx={{ display: "block", mb: 1.5 }}>
+            Coupon applied: {activeCoupon.code}
+          </Typography>
+        ) : (
+          <Box
+            sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, p: 1.25, mb: 1.5, borderRadius: 2, bgcolor: "background.default" }}
+          >
+            <Typography variant="caption">
+              Coupon available: <strong>{activeCoupon.code}</strong> ({activeCoupon.percentOff}% off)
+            </Typography>
+            <Button size="small" onClick={() => onCoupon(activeCoupon.code)}>Apply</Button>
+          </Box>
+        )
+      ) : (
+        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1.5 }}>
+          No coupons are active.
+        </Typography>
+      )}
+
       <Button
         fullWidth
         size="large"

@@ -6,9 +6,12 @@ import { api } from "../api";
 import { tileGradients } from "../theme";
 import type { Coupon, Report } from "../types";
 
-type Props = { notify: (msg: string, kind?: "success" | "error") => void };
+type Props = {
+  notify: (msg: string, kind?: "success" | "error") => void;
+  onCouponGenerated: (coupon: { code: string; percentOff: number }) => void;
+};
 
-export default function AdminPanel({ notify }: Props) {
+export default function AdminPanel({ notify, onCouponGenerated }: Props) {
   const [report, setReport] = useState<Report | null>(null);
   const [lastCoupon, setLastCoupon] = useState<Coupon | null>(null);
 
@@ -22,6 +25,7 @@ export default function AdminPanel({ notify }: Props) {
       .generateCoupon()
       .then((c) => {
         setLastCoupon(c);
+        onCouponGenerated({ code: c.code, percentOff: c.percentOff });
         loadReport();
       })
       .catch((e) => notify(e.message, "error"));

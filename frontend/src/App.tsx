@@ -16,6 +16,7 @@ export default function App() {
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<Cart | null>(null);
   const [coupon, setCoupon] = useState("");
+  const [activeCoupon, setActiveCoupon] = useState<{ code: string; percentOff: number } | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
 
   const notify = (msg: string, kind: Toast["kind"] = "success") => setToast({ msg, kind });
@@ -43,6 +44,7 @@ export default function App() {
     try {
       const order = await api.checkout(cart.id, coupon || null);
       notify(`Order placed — total $${(order.totalCents / 100).toFixed(2)}`);
+      if (coupon) setActiveCoupon(null);
       setCoupon("");
       await Promise.all([loadProducts(), startCart()]);
     } catch (e) {
@@ -91,12 +93,12 @@ export default function App() {
                 <ProductGrid products={products} onAdd={addToCart} />
               </Grid>
               <Grid item xs={12} md={4}>
-                <CartPanel cart={cart} coupon={coupon} onCoupon={setCoupon} onChangeQty={changeQty} onCheckout={checkout} />
+                <CartPanel cart={cart} coupon={coupon} onCoupon={setCoupon} onChangeQty={changeQty} onCheckout={checkout} activeCoupon={activeCoupon} />
               </Grid>
             </Grid>
           </>
         ) : (
-          <AdminPanel notify={notify} />
+          <AdminPanel notify={notify} onCouponGenerated={setActiveCoupon} />
         )}
       </Container>
 

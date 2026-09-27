@@ -9,10 +9,40 @@ export type Product = {
 export type Cart = {
   id: string;
   items: Map<string, number>; // productId -> quantity
+  status: "OPEN" | "CHECKED_OUT";
+};
+
+export type OrderItem = {
+  productId: string;
+  name: string;
+  unitPriceCents: number;
+  qty: number;
+};
+
+export type Order = {
+  id: string;
+  cartId: string;
+  items: OrderItem[];
+  subtotalCents: number;
+  discountCents: number;
+  totalCents: number;
+  couponCode: string | null;
+  createdAt: string;
+};
+
+export type Coupon = {
+  code: string;
+  percentOff: number;
+  redeemed: boolean;
+  redeemedOrderId: string | null;
 };
 
 export const products = new Map<string, Product>();
 export const carts = new Map<string, Cart>();
+export const orders = new Map<string, Order>();
+export const coupons = new Map<string, Coupon>();
+export const idempotencyKeys = new Map<string, string>(); // Idempotency-Key -> orderId
+export const counters = { ordersPlaced: 0 };
 
 function seed(): void {
   products.clear();
@@ -29,6 +59,10 @@ function seed(): void {
 // Reseed to a clean state; tests call this so every run starts identical.
 export function reset(): void {
   carts.clear();
+  orders.clear();
+  coupons.clear();
+  idempotencyKeys.clear();
+  counters.ordersPlaced = 0;
   seed();
 }
 

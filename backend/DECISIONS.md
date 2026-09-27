@@ -57,3 +57,32 @@ sees the current price — nothing stale is frozen into the cart. What price an
 order locks in at checkout is a separate decision I'll make with the order code.
 Quantity and stock are checked as an item goes in, so an invalid item never
 enters the cart in the first place.
+
+## Checkout is one guarded, all-or-nothing step
+
+Checkout is where every invariant meets, so it's a single critical section. A
+small async mutex serializes checkouts, and inside it everything is validated —
+cart open and non-empty, every line still in stock, coupon present and unused —
+before anything is mutated. Only after all checks pass do I decrement stock,
+write the order, mark the coupon used, and close the cart. Because that section
+is synchronous and serialized, two checkouts can't both grab the last units (the
+second sees the reduced stock and is rejected), and retries are handled with an
+`Idempotency-Key`: the first checkout records key -> order, and a repeat with the
+same key returns that same order instead of charging twice. A checked-out cart
+also flips to `CHECKED_OUT`, so re-posting it is a plain 409. Node being
+single-threaded already prevents interleaving, but the mutex states the intent
+and still holds if an `await` is added later; at multiple instances this becomes
+a DB transaction with row locks.
+
+## Orders snapshot their line items
+
+An order copies each line's name and unit price at checkout rather than pointing
+at the live product. Later catalog changes never rewrite history, and an order
+always shows what the customer actually paid.
+
+## Coupons are single-use and survive failed checkouts
+
+A coupon is only marked redeemed in the commit part of checkout, after every
+other check has passed. So a checkout that fails on stock never burns the coupon,
+and since redemption happens inside the same guarded section, two checkouts can't
+both redeem one code — the second sees it already used.

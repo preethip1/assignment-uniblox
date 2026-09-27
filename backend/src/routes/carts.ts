@@ -4,6 +4,8 @@ import { randomUUID } from "node:crypto";
 import { carts, products, type Cart, type Product } from "../store";
 import { formatCents } from "../money";
 import { AppError } from "../errors";
+import { asyncHandler } from "../async-handler";
+import { checkout } from "../services/checkout";
 
 export const cartsRouter = Router();
 
@@ -49,11 +51,11 @@ function toCartView(cart: Cart) {
     };
   });
   const subtotalCents = items.reduce((sum, i) => sum + i.lineTotalCents, 0);
-  return { id: cart.id, items, subtotalCents, subtotal: formatCents(subtotalCents) };
+  return { id: cart.id, status: cart.status, items, subtotalCents, subtotal: formatCents(subtotalCents) };
 }
 
 cartsRouter.post("/", (_req, res) => {
-  const cart: Cart = { id: randomUUID(), items: new Map() };
+  const cart: Cart = { id: randomUUID(), items: new Map(), status: "OPEN" };
   carts.set(cart.id, cart);
   res.status(201).json(toCartView(cart));
 });
@@ -91,3 +93,13 @@ cartsRouter.delete("/:id/items/:productId", (req, res) => {
   }
   res.json(toCartView(cart));
 });
+
+cartsRouter.post(
+  "/:id/checkout",
+  asyncHandler(async (req, res) => {
+    const idempotencyKey = req.header("Idempotency-Key") ?? null;
+    const couponCode = req.body?.couponCode ?? null;
+    const { order, created } = await checkout({ cartId: req.params.id, couponCode, idempotencyKey });
+    res.status(created ? 201 : 200).json(order);
+  }),
+);

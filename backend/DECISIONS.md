@@ -97,3 +97,64 @@ second call for the same one is rejected. The report just reads the orders and
 coupons and adds them up (units sold, gross, discount, net, coupon counts); it
 never writes anything, so it can't drift from the real state — net always equals
 gross minus discount because that's exactly what each order stored.
+
+## Invariants I'm holding to
+
+- Stock is never negative and never oversold.
+- A checkout creates at most one order; a retried checkout returns the original.
+- A coupon is redeemed at most once, and only by a checkout that succeeds.
+- A cart can be checked out only once.
+- Order totals are whole cents and never negative. A percentage discount is
+  floored to whole cents with `floor(subtotal * percent / 100)`, and the total is
+  the subtotal minus that discount.
+- The report never changes state and always reconciles with it.
+
+## Ambiguities I had to settle
+
+- Price changing between add and checkout: the cart always shows the current
+  catalog price, and the order locks the price in at checkout via a snapshot.
+  Nobody gets surprised, and past orders never change.
+- What counts toward "every nth order": only orders that were actually placed. A
+  failed checkout doesn't move the counter, and each milestone yields one coupon.
+- Cart lifecycle: a cart is single-use. Once it's checked out, it's closed.
+- Discount larger than the total: the total is clamped at zero, so a coupon can
+  never make an order negative.
+- Bad input like an empty cart, a non-positive quantity, or an unknown product:
+  rejected before any state changes, each with its own error code.
+
+## Running more than one instance
+
+Right now correctness comes from a single process: an in-memory store plus one
+mutex that serializes checkout. That doesn't survive horizontal scaling, since
+separate processes wouldn't share the lock or the data. The same guarantees would
+move into a database. Stock becomes a conditional `UPDATE ... WHERE stock >= qty`
+(or a `SELECT ... FOR UPDATE`) inside a transaction, the idempotency key becomes a
+unique constraint, and coupon redemption becomes a single-row conditional update.
+The service stays stateless, and the database becomes both the source of truth and
+the thing that arbitrates concurrency. A distributed lock like Redis would also
+work, but I'd rather let the database enforce it than run a lock of my own.
+
+## What I left out on purpose
+
+Auth, real persistence and migrations, payments, pagination, and rate limiting.
+All of them are reasonable for production, and none are needed to show the
+checkout and coupon correctness this task is about. State resets on restart, which
+I'm treating as fine for the timebox.
+
+## With more time
+
+- Move the store to Postgres and re-express these invariants as transactions and constraints, as above.
+- Add concurrency tests aimed specifically at coupon redemption, not just stock.
+- Give idempotency keys a TTL instead of keeping them in memory forever.
+- A little structured logging and stricter input validation at the edges.
+
+## How I used AI
+
+I used an AI assistant mainly to move faster on the repetitive parts, like route
+wiring, test scaffolding, and boilerplate types, so I could spend my own time on
+the decisions that actually matter here: the invariants, the concurrency and
+idempotency approach, and the shape of the API. I treated its output as a draft
+and reshaped it rather than taking it as-is. Where it leaned toward heavier
+abstractions, I kept things deliberately small, for example a single `AppError`
+with one error middleware and in-memory stores instead of a database. I
+understand every part of the result and can change it.

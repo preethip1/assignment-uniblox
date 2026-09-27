@@ -35,6 +35,7 @@ export type Coupon = {
   percentOff: number;
   redeemed: boolean;
   redeemedOrderId: string | null;
+  milestoneIndex?: number; // set when the coupon was generated for an nth-order milestone
 };
 
 export const products = new Map<string, Product>();
@@ -43,6 +44,12 @@ export const orders = new Map<string, Order>();
 export const coupons = new Map<string, Coupon>();
 export const idempotencyKeys = new Map<string, string>(); // Idempotency-Key -> orderId
 export const counters = { ordersPlaced: 0 };
+
+// Coupon rule: every nth order earns one coupon worth this percent off.
+export const config = {
+  nthOrder: Number(process.env.NTH_ORDER) || 5,
+  discountPercent: Number(process.env.DISCOUNT_PERCENT) || 10,
+};
 
 function seed(): void {
   products.clear();

@@ -86,3 +86,14 @@ A coupon is only marked redeemed in the commit part of checkout, after every
 other check has passed. So a checkout that fails on stock never burns the coupon,
 and since redemption happens inside the same guarded section, two checkouts can't
 both redeem one code — the second sees it already used.
+
+## Admin generation and a read-only report
+
+Coupons aren't minted automatically at checkout — an admin endpoint mints one,
+and only when the order count has actually crossed a milestone (every nth order).
+I track how many milestones have been reached versus how many coupons already
+carry a `milestoneIndex`, so a milestone can only ever produce one coupon and a
+second call for the same one is rejected. The report just reads the orders and
+coupons and adds them up (units sold, gross, discount, net, coupon counts); it
+never writes anything, so it can't drift from the real state — net always equals
+gross minus discount because that's exactly what each order stored.

@@ -1,0 +1,100 @@
+{
+  "info": {
+    "name": "Ecommerce Checkout & Rewards",
+    "description": "Runnable flow: browse -> cart -> checkout -> order -> admin. Run top to bottom; cartId, orderId and couponCode are saved automatically.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "cartId", "value": "" },
+    { "key": "orderId", "value": "" },
+    { "key": "couponCode", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": { "method": "GET", "url": "{{baseUrl}}/health" }
+    },
+    {
+      "name": "List products",
+      "request": { "method": "GET", "url": "{{baseUrl}}/products" }
+    },
+    {
+      "name": "Create cart",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": ["pm.collectionVariables.set('cartId', pm.response.json().id);"],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": { "method": "POST", "url": "{{baseUrl}}/carts" }
+    },
+    {
+      "name": "Add item to cart",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"productId\": \"p1\",\n  \"qty\": 1\n}" },
+        "url": "{{baseUrl}}/carts/{{cartId}}/items"
+      }
+    },
+    {
+      "name": "View cart",
+      "request": { "method": "GET", "url": "{{baseUrl}}/carts/{{cartId}}" }
+    },
+    {
+      "name": "Update item quantity",
+      "request": {
+        "method": "PATCH",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"qty\": 2\n}" },
+        "url": "{{baseUrl}}/carts/{{cartId}}/items/p1"
+      }
+    },
+    {
+      "name": "Checkout",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": ["if (pm.response.code < 300) pm.collectionVariables.set('orderId', pm.response.json().id);"],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Idempotency-Key", "value": "{{$guid}}" }
+        ],
+        "body": { "mode": "raw", "raw": "{}" },
+        "url": "{{baseUrl}}/carts/{{cartId}}/checkout"
+      }
+    },
+    {
+      "name": "Get order",
+      "request": { "method": "GET", "url": "{{baseUrl}}/orders/{{orderId}}" }
+    },
+    {
+      "name": "Generate coupon (admin)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": ["if (pm.response.code < 300) pm.collectionVariables.set('couponCode', pm.response.json().code);"],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": { "method": "POST", "url": "{{baseUrl}}/admin/coupons/generate" }
+    },
+    {
+      "name": "Report (admin)",
+      "request": { "method": "GET", "url": "{{baseUrl}}/admin/report" }
+    }
+  ]
+}
